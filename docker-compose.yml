@@ -1,0 +1,65 @@
+version: '3'
+services:
+  create_api:
+    image: composer:1.9.3
+    container_name: lumen_init
+    volumes:
+      - .:/app
+    restart: 'no'
+    entrypoint: tail -f /dev/null
+    profiles: ["create"]
+  db:
+    image: postgres
+    container_name: lumen_db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: pass1234
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - ./docker/postgresql/data:/var/lib/postgresql/data:rw
+      - ./docker/docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d:ro
+  backend:
+    container_name: lumen_backend
+    build:
+      context: ./api
+    restart: 'no'
+    environment:
+      - COMPOSER_CACHE_DIR=/usr/share/cache
+    volumes:
+      - ./api:/app
+      - ./.cache:/usr/share/cache
+      - ./docker/php/local.ini:/usr/local/etc/php/conf.d/local.ini
+    working_dir: /app
+    depends_on:
+      - db
+  server:
+    image: nginx:alpine
+    container_name: lumen_server
+    restart: 'no'
+    volumes:
+      - ./docker/nginx/default.conf.template:/etc/nginx/templates/default.conf.template
+      - ./api:/app
+    ports:
+      - '8001:80'
+    command: [nginx-debug, '-g', 'daemon off;']
+  stripe:
+    image: stripe/stripe-cli:latest
+    container_name: lumen_stripe_cli
+    volumes:
+      - ./docker/stripe/config:/root/.config/stripe/
+  queue:
+    image: schickling/beanstalkd
+    container_name: lumen_queue
+  mercure:
+    image: dunglas/mercure
+    container_name: lumen_mercure
+    environment:
+      DEBUG: "debug"
+      SERVER_NAME: ':80'
+      MERCURE_PUBLISHER_JWT_KEY: '!ChangeMe!'
+      MERCURE_SUBSCRIBER_JWT_KEY: '!ChangeMe!'
+      MERCURE_EXTRA_DIRECTIVES: |-
+        cors_origins "*"
+        anonymous
+    ports:
+      - "9000:80"
