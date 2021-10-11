@@ -11,8 +11,10 @@
     "axios": "^0.22.0",
     "core-js": "^3.6.5",
     "element-plus": "^1.1.0-beta.19",
+    "event-source-polyfill": "^1.0.25",
     "sass": "^1.42.1",
     "sass-loader": "^10",
+    "tiny-emitter": "^2.1.0",
     "vue": "^3.0.0"
   },
   "devDependencies": {

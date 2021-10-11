@@ -4,7 +4,9 @@ namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
 use Stripe\StripeClient;
+use Symfony\Component\Mercure\Authorization;
 use Symfony\Component\Mercure\Hub;
+use Symfony\Component\Mercure\Jwt\LcobucciFactory;
 use Symfony\Component\Mercure\Jwt\StaticTokenProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -14,7 +16,9 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(Hub::class, function($app) {
             $url = 'http://mercure/.well-known/mercure';
             $token = env('MERCURE_JWT_TOKEN');
+            $secret = env('MERCURE_JWT_SECRET');
             $jwtProvider = new StaticTokenProvider($token);
+
             return new Hub($url, $jwtProvider);
         });
 

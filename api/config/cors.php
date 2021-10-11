@@ -5,7 +5,7 @@ return [
     'allow_headers' => ['*'],
     'allow_methods' => ['*'],
     'allow_credentials' => false,
-    'expose_headers' => [],
+    'expose_headers' => ['*'],
     'max_age' => 0,
 ];
 

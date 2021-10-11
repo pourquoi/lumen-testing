@@ -26,7 +26,28 @@ class ProcessPictureJob extends Job
 
         $destination_path = "/users/{$this->user->id}/profile.$file_ext";
 
-        $flysystem->put($destination_path, file_get_contents(base_path('public/uploads') . $this->path));
+        $image = new \Imagick(base_path('public/uploads') . $this->path);
+
+        $w = $image->getImageWidth();
+        $h = $image->getImageHeight();
+
+        $new_h = 400;
+        $new_w = 400;
+
+        if ($w > $h) {
+            $resize_w = $w * $new_h / $h;
+            $resize_h = $new_h;
+        }
+        else {
+            $resize_w = $new_w;
+            $resize_h = $h * $new_w / $w;
+        }
+
+        $image->resizeImage($resize_w, $resize_h, \Imagick::FILTER_LANCZOS, 0.9);
+        $image->cropImage($new_w, $new_h, ($resize_w - $new_w) / 2, ($resize_h - $new_h) / 2);
+        $image->adaptiveBlurImage(50, 10);
+
+        $flysystem->put($destination_path, (string)$image);
 
         $this->user->avatars()->delete();
 
@@ -35,7 +56,10 @@ class ProcessPictureJob extends Job
         $avatar->path = $destination_path;
         $avatar->save();
 
-        $msg = 'picture uploaded';
+        $msg = json_encode([
+            'event' => 'picture.processed',
+            'payload' => $avatar
+        ]);
         $topics = [
             "http://example.com/user/{$this->user->id}"
         ];

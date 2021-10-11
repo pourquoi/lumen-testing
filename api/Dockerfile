@@ -14,7 +14,10 @@ RUN apt update && apt install -y \
     zip \
     unzip \
     libpq-dev \
-    supervisor
+    supervisor \
+    libmagickwand-dev --no-install-recommends \
+
+RUN apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # SUPERVISOR
 COPY ./docker/supervisor/conf.d/lumen-worker.conf /etc/supervisor/conf.d/lumen-worker.conf
@@ -22,9 +25,10 @@ COPY ./docker/supervisor/conf.d/php-fpm.conf /etc/supervisor/conf.d/php-fpm.conf
 RUN touch /var/run/supervisor.sock
 RUN chmod 777 /var/run/supervisor.sock
 
-RUN apt-get clean && rm -rf /var/lib/apt/lists/*
-
 RUN docker-php-ext-install pdo pdo_pgsql
+
+RUN printf "\n" | pecl install imagick
+RUN docker-php-ext-enable imagick
 
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
 

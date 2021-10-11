@@ -6,7 +6,12 @@ use App\Models\User;
 use GrahamCampbell\Flysystem\FlysystemManager;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Lcobucci\JWT\Builder;
+use Lcobucci\JWT\Signer\Hmac\Sha256;
+use Lcobucci\JWT\Signer\Key;
 use Stripe\StripeClient;
+use Symfony\Component\Mercure\Authorization;
+use Symfony\Component\Mercure\Hub;
 
 
 class UserController extends Controller
@@ -45,9 +50,20 @@ class UserController extends Controller
         }
     }
 
-    public function me()
+    public function me(Hub $hub)
     {
-        return response()->json(Auth::user(), 200);
+        $user = Auth::user();
+
+        $builder = new Builder();
+        $token = $builder->withClaim('mercure', [
+            'subscribe' => ['http://example.com/user/' . $user->id]
+        ])->getToken(new Sha256(), new Key(env('MERCURE_JWT_SECRET')));
+
+        //$token = $hub->getFactory()->create(['http://example.com/user/' . $user->id]);
+
+        return response()->json(Auth::user(), 200, [
+            'X-Subscription-Token' => $token
+        ]);
     }
 
     public function createStripeCustomer(Request $request, $userId)
