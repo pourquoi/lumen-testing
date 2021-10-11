@@ -15,7 +15,7 @@ RUN apt update && apt install -y \
     unzip \
     libpq-dev \
     supervisor \
-    libmagickwand-dev --no-install-recommends \
+    libmagickwand-dev --no-install-recommends
 
 RUN apt-get clean && rm -rf /var/lib/apt/lists/*
 
